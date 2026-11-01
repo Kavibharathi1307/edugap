@@ -15,6 +15,7 @@ const pageTitles = {
   '/quizzes': 'Assessment Center',
   '/quizzes/play': 'Assessment in Progress',
   '/recommendations': 'Recommendations',
+  '/resources': 'Learning Resources',
   '/analytics': 'Learning Analytics',
   '/history': 'Assessment History',
   '/profile': 'Student Profile',
@@ -29,6 +30,8 @@ export default function Navbar({ onMenuClick }) {
     pageTitles[location.pathname] ||
     (location.pathname.startsWith('/topics/')
       ? 'Topic Details'
+      : location.pathname.startsWith('/resources/')
+      ? 'Resource Details'
       : location.pathname.startsWith('/quizzes/result/')
       ? 'Assessment Result'
       : 'EduGap');

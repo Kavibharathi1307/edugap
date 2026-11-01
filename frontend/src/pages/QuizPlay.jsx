@@ -48,7 +48,7 @@ export default function QuizPlay() {
     try {
       let url;
       if (topicId) {
-        url = `/quizzes/questions?topicId=${topicId}&limit=4`;
+        url = `/quizzes/questions?topicId=${topicId}&limit=10`;
         if (subjectId) url += `&subjectId=${subjectId}`;
       } else if (subjectId) {
         url = `/quizzes/questions?subjectId=${subjectId}&limit=10`;

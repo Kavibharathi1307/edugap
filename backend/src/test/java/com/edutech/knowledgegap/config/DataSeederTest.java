@@ -2,6 +2,7 @@ package com.edutech.knowledgegap.config;
 
 import com.edutech.knowledgegap.entity.Student;
 import com.edutech.knowledgegap.entity.Subject;
+import com.edutech.knowledgegap.repository.LearningRecommendationRepository;
 import com.edutech.knowledgegap.repository.LearningResourceRepository;
 import com.edutech.knowledgegap.repository.QuestionOptionRepository;
 import com.edutech.knowledgegap.repository.QuestionRepository;
@@ -56,6 +57,9 @@ class DataSeederTest {
     @Mock
     private QuizAttemptRepository attemptRepository;
 
+    @Mock
+    private LearningRecommendationRepository recommendationRepository;
+
     private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     private DataSeeder dataSeeder;
@@ -70,6 +74,7 @@ class DataSeederTest {
                 resourceRepository,
                 studentRepository,
                 attemptRepository,
+                recommendationRepository,
                 passwordEncoder
         );
         when(subjectRepository.findByCodeIgnoreCase(anyString())).thenAnswer(invocation -> {

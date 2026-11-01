@@ -78,6 +78,9 @@ public class KnowledgeGapDetectionServiceImpl implements KnowledgeGapDetectionSe
         if (attempted <= 0) {
             return "NOT_ASSESSED";
         }
+        if (attempted < 3) {
+            return "NEEDS_FURTHER_ASSESSMENT";
+        }
         if (accuracy < thresholds.getHighPriorityThreshold()) {
             return "HIGH_PRIORITY_GAP";
         }
@@ -112,6 +115,10 @@ public class KnowledgeGapDetectionServiceImpl implements KnowledgeGapDetectionSe
                 case "STRONG_UNDERSTANDING" -> {
                     label = "Strong Understanding";
                     color = "#10b981"; // emerald
+                }
+                case "NEEDS_FURTHER_ASSESSMENT" -> {
+                    label = "Needs Further Assessment";
+                    color = "#eab308"; // amber/yellow
                 }
                 default -> {
                     label = "Not Assessed";

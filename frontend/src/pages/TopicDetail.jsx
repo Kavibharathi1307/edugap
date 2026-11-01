@@ -202,41 +202,71 @@ export default function TopicDetail() {
       )}
 
       {/* Recommended Resources */}
-      {topic.resources && topic.resources.length > 0 && (
-        <section className="card space-y-4 p-6 sm:p-8">
-          <h3 className="text-base font-bold text-navy">Recommended reference resources</h3>
+      <section className="card space-y-4 p-6 sm:p-8">
+        <h3 className="text-base font-bold text-navy">Recommended reference resources</h3>
+        {topic.resources && topic.resources.length > 0 ? (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {topic.resources.map((res) => (
-              <a
-                key={res.id}
-                href={res.resourceUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="group flex flex-col justify-between rounded-xl border border-slate-200 bg-slate-50/60 p-4 transition-colors hover:border-primary-300 hover:bg-primary-50/40"
-              >
-                <div>
-                  <div className="mb-2 flex items-center justify-between">
-                    <span className="badge-neutral">{res.contentType}</span>
-                    <ExternalLink
-                      className="h-3.5 w-3.5 text-slate-400 transition-colors group-hover:text-primary-600"
-                      aria-hidden="true"
-                    />
+            {topic.resources.map((res) => {
+              const cardContent = (
+                <>
+                  <div>
+                    <div className="mb-2 flex items-center justify-between">
+                      <span className="badge-neutral">{res.contentType}</span>
+                      {res.resourceUrl ? (
+                        <ExternalLink
+                          className="h-3.5 w-3.5 text-slate-400 transition-colors group-hover:text-primary-600"
+                          aria-hidden="true"
+                        />
+                      ) : (
+                        <BookOpen className="h-3.5 w-3.5 text-slate-400" aria-hidden="true" />
+                      )}
+                    </div>
+                    <h4 className="text-sm font-bold text-navy transition-colors group-hover:text-primary-700">
+                      {res.title}
+                    </h4>
+                    <p className="mt-1 text-xs leading-relaxed text-slate-500">{res.summary}</p>
                   </div>
-                  <h4 className="text-sm font-bold text-navy transition-colors group-hover:text-primary-700">
-                    {res.title}
-                  </h4>
-                  <p className="mt-1 text-xs leading-relaxed text-slate-500">{res.summary}</p>
+                  <div className="mt-3 border-t border-slate-200/70 pt-2 text-right">
+                    <span
+                      className={`text-[11px] font-semibold group-hover:underline ${
+                        res.resourceUrl ? 'text-primary-700' : 'text-slate-400'
+                      }`}
+                    >
+                      {res.resourceUrl ? <>Open resource &rarr;</> : 'No external link yet'}
+                    </span>
+                  </div>
+                </>
+              );
+
+              return res.resourceUrl ? (
+                <a
+                  key={res.id}
+                  href={res.resourceUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="group flex flex-col justify-between rounded-xl border border-slate-200 bg-slate-50/60 p-4 transition-colors hover:border-primary-300 hover:bg-primary-50/40"
+                >
+                  {cardContent}
+                </a>
+              ) : (
+                <div
+                  key={res.id}
+                  className="group flex flex-col justify-between rounded-xl border border-slate-200 bg-slate-50/60 p-4"
+                >
+                  {cardContent}
                 </div>
-                <div className="mt-3 border-t border-slate-200/70 pt-2 text-right">
-                  <span className="text-[11px] font-semibold text-primary-700 group-hover:underline">
-                    Open resource &rarr;
-                  </span>
-                </div>
-              </a>
-            ))}
+              );
+            })}
           </div>
-        </section>
-      )}
+        ) : (
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-center text-sm text-slate-500">
+            No learning resources have been published for this topic yet.{' '}
+            <Link to="/resources" className="font-semibold text-primary-700 hover:underline">
+              Browse all learning resources
+            </Link>
+          </div>
+        )}
+      </section>
     </div>
   );
 }

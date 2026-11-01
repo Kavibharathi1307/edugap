@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @Component
@@ -23,6 +24,7 @@ public class DataSeeder implements CommandLineRunner {
     private final LearningResourceRepository resourceRepository;
     private final StudentRepository studentRepository;
     private final QuizAttemptRepository attemptRepository;
+    private final LearningRecommendationRepository recommendationRepository;
     private final PasswordEncoder passwordEncoder;
 
     public DataSeeder(SubjectRepository subjectRepository,
@@ -32,6 +34,7 @@ public class DataSeeder implements CommandLineRunner {
                       LearningResourceRepository resourceRepository,
                       StudentRepository studentRepository,
                       QuizAttemptRepository attemptRepository,
+                      LearningRecommendationRepository recommendationRepository,
                       PasswordEncoder passwordEncoder) {
         this.subjectRepository = subjectRepository;
         this.topicRepository = topicRepository;
@@ -40,6 +43,7 @@ public class DataSeeder implements CommandLineRunner {
         this.resourceRepository = resourceRepository;
         this.studentRepository = studentRepository;
         this.attemptRepository = attemptRepository;
+        this.recommendationRepository = recommendationRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -68,6 +72,8 @@ public class DataSeeder implements CommandLineRunner {
                 "calculate", 6);
 
         backfillLegacyData(java);
+        repairResourceUrls();
+        backfillRecommendationResources();
 
         // Seed the Java curriculum only when it is missing, even if other subjects already exist.
         if (topicRepository.countBySubjectId(java.getId()) > 0) {
@@ -116,6 +122,10 @@ public class DataSeeder implements CommandLineRunner {
                 "public int main(String[] args)",
                 "B", "The Java runtime looks specifically for public static void main(String[] args) to start execution.", "BEGINNER");
 
+        addQuestion(t1, "Which tool is used to debug Java applications?",
+                "JDB (Java Debugger)", "JVM Inspector", "Java Profiler", "APM Tool",
+                "A", "JDB (Java Debugger) is a simple command-line debugger that comes with the JDK.", "BEGINNER");
+
         // ==========================================
         // 2. VARIABLES AND DATA TYPES
         // ==========================================
@@ -128,7 +138,7 @@ public class DataSeeder implements CommandLineRunner {
                 "int age = 21;\ndouble gpa = 3.85;\nchar grade = 'A';\nboolean isEnrolled = true;\n\n// Explicit narrowing cast\nint roundedGpa = (int) gpa;",
                 2
         ));
-        seedResource(t2, "Java Primitive Types & Memory Footprint", "ARTICLE", "https://dev.java/learn/datatypes/", "Detailed breakdown of byte sizes, min/max values, and IEEE floating points.", "BEGINNER");
+        seedResource(t2, "Java Primitive Types & Memory Footprint", "ARTICLE", "https://docs.oracle.com/javase/tutorial/essential/java/datatypes.html", "Detailed breakdown of byte sizes, min/max values, and IEEE floating points.", "BEGINNER");
         seedResource(t2, "Type Casting Rules & Overflow Prevention", "CHEATSHEET", "https://docs.oracle.com/javase/tutorial/java/nutsandbolts/datatypes.html", "Widening vs Narrowing casting reference table.", "INTERMEDIATE");
 
         addQuestion(t2, "What is the size of an int primitive in Java?",
@@ -147,6 +157,10 @@ public class DataSeeder implements CommandLineRunner {
                 "130", "-126", "127", "Compilation Error",
                 "B", "A Java byte ranges from -128 to 127. 130 overflows 127 and wraps around to -126 in two's complement representation.", "ADVANCED");
 
+        addQuestion(t2, "Which of the following is a valid Java literal for a double?",
+                "3.14f", "3.14d", "3.14i", "3.14l",
+                "B", "The 'd' suffix denotes a double literal; 'f' denotes float, 'i' is int, and 'l' is long.", "BEGINNER");
+
         // ==========================================
         // 3. CONDITIONAL STATEMENTS
         // ==========================================
@@ -159,7 +173,7 @@ public class DataSeeder implements CommandLineRunner {
                 "int score = 82;\nString result = (score >= 75) ? \"Distinction\" : \"Pass\";\n\nswitch (score / 10) {\n    case 10, 9 -> System.out.println(\"Grade A\");\n    case 8 -> System.out.println(\"Grade B\");\n    default -> System.out.println(\"Review Needed\");\n}",
                 3
         ));
-        seedResource(t3, "Mastering Decision Making in Java", "ARTICLE", "https://dev.java/learn/control-flow/", "Control flow logic, truth tables, and short-circuit evaluation.", "BEGINNER");
+        seedResource(t3, "Mastering Decision Making in Java", "ARTICLE", "https://docs.oracle.com/javase/tutorial/java/nutsandbolts/if.html", "Control flow logic, truth tables, and short-circuit evaluation.", "BEGINNER");
 
         addQuestion(t3, "What is the result of true || false && false?",
                 "false", "true", "Compilation error", "null",
@@ -180,6 +194,10 @@ public class DataSeeder implements CommandLineRunner {
                 "10", "20", "30", "Compilation error",
                 "B", "Since x > 2 is true, it evaluates the inner ternary: x < 4 is false (5 < 4 is false), returning 20.", "INTERMEDIATE");
 
+        addQuestion(t3, "Which of the following is the correct way to declare a switch variable in Java 12+?",
+                "switch (int x) {}", "switch (Integer x) {}", "switch (x int) {}", "switch (int x: arr) {}",
+                "A", "Java 12+ allows switch expressions with primitive types directly wrapped in classes.", "INTERMEDIATE");
+
         // ==========================================
         // 4. LOOPS
         // ==========================================
@@ -192,7 +210,7 @@ public class DataSeeder implements CommandLineRunner {
                 "for (int i = 0; i < 5; i++) {\n    if (i == 2) continue;\n    System.out.println(\"Iteration: \" + i);\n}\n\nint count = 0;\ndo {\n    count++;\n} while (count < 3);",
                 4
         ));
-        seedResource(t4, "Looping Constructs & Performance Optimization", "ARTICLE", "https://dev.java/learn/loops/", "Step-by-step breakdown of loop mechanics and efficiency.", "BEGINNER");
+        seedResource(t4, "Looping Constructs & Performance Optimization", "ARTICLE", "https://docs.oracle.com/javase/tutorial/java/nutsandbolts/loop.html", "Step-by-step breakdown of loop mechanics and efficiency.", "BEGINNER");
 
         addQuestion(t4, "How many times does the body of a do-while loop execute at minimum?",
                 "0 times", "1 time", "Depends on condition", "Infinite times",
@@ -209,12 +227,20 @@ public class DataSeeder implements CommandLineRunner {
                 "0", "01", "012", "Compilation error",
                 "A", "When i = 0, 0 is printed. Next, i becomes 1; the condition (i == 1) triggers break, instantly exiting the loop before printing 1.", "BEGINNER");
 
-        addQuestion(t4, "What is a key limitation of the enhanced for-each loop in Java arrays?",
+addQuestion(t4, "What is a key limitation of the enhanced for-each loop in Java arrays?",
                 "It cannot iterate backwards or directly modify element values by index.",
                 "It is slower than a while loop by a factor of 10.",
                 "It only works with Strings, not primitive numbers.",
                 "It requires wrapping all numbers in ArrayList.",
                 "A", "The enhanced for-each loop provides read-only traversal without exposed numeric indices, making reverse iteration impossible without manual counters.", "INTERMEDIATE");
+
+        addQuestion(t4, "What will be the output of: for (int i = 0; i < 3; i++) { if (i == 1) break; System.out.print(i); }?",
+                "0", "01", "012", "Compilation error",
+                "A", "When i = 0, 0 is printed. Next, i becomes 1; the condition (i == 1) triggers break, instantly exiting the loop before printing 1.", "BEGINNER");
+
+        addQuestion(t4, "Which of the following can be used to prevent infinite loop execution?",
+                "A labeled break statement", "A while loop with true condition", "A for loop without increment", "A do-while loop with immediate break",
+                "A", "A labeled break statement can exit enclosed loops beyond the immediate loop.", "BEGINNER");
 
         // ==========================================
         // 5. ARRAYS
@@ -228,7 +254,7 @@ public class DataSeeder implements CommandLineRunner {
                 "int[] numbers = {10, 20, 30, 40};\nSystem.out.println(\"First element: \" + numbers[0]);\nSystem.out.println(\"Length: \" + numbers.length);\n\njava.util.Arrays.sort(numbers);",
                 5
         ));
-        seedResource(t5, "Java Arrays in Depth", "ARTICLE", "https://dev.java/learn/arrays/", "Memory layout of arrays, contiguous memory allocation, and array utilities.", "BEGINNER");
+        seedResource(t5, "Java Arrays in Depth", "ARTICLE", "https://docs.oracle.com/javase/tutorial/java/nutsandbolts/arrays.html", "Memory layout of arrays, contiguous memory allocation, and array utilities.", "BEGINNER");
 
         addQuestion(t5, "What exception is thrown if you access arr[5] on an array of length 5?",
                 "NullPointerException", "ArrayIndexOutOfBoundsException", "IllegalArgumentException", "IndexUnderflowException",
@@ -242,12 +268,16 @@ public class DataSeeder implements CommandLineRunner {
                 "arr.sort()", "java.util.Arrays.sort(arr)", "Collections.sort(arr)", "System.arraySort(arr)",
                 "B", "Arrays.sort() is the standard utility method for sorting primitive and object arrays in Java.", "BEGINNER");
 
-        addQuestion(t5, "Can the length of an instantiated Java array be changed dynamically?",
+addQuestion(t5, "Can the length of an instantiated Java array be changed dynamically?",
                 "Yes, using arr.length = newSize;",
                 "Yes, using arr.resize(newSize);",
                 "No, Java arrays have a fixed size upon creation.",
                 "Yes, if created with the dynamic keyword.",
                 "C", "Array dimensions are immutable once created in memory. To support dynamic resizing, ArrayList is used.", "INTERMEDIATE");
+
+        addQuestion(t5, "Which of the following produces a compile error when assigning to an array element?",
+                "arr[0] = 42;", "arr[0] = (double) 3.14;", "arr[0] = 'A';", "arr[-1] = 9;",
+                "B", "Assigning a double to an int array element requires an explicit cast in Java.", "BEGINNER");
 
         // ==========================================
         // 6. STRINGS
@@ -270,7 +300,7 @@ public class DataSeeder implements CommandLineRunner {
                 "Because Java classes cannot be extended.",
                 "A", "Immutability guarantees security in network/classloading parameters, thread safety without synchronization, and enables String pooling.", "INTERMEDIATE");
 
-        addQuestion(t6, "What will: String a = \"hello\"; String b = \"hello\"; System.out.println(a == b); print?",
+addQuestion(t6, "What will: String a = \"hello\"; String b = \"hello\"; System.out.println(a == b); print?",
                 "false", "true", "Compilation error", "NullPointerException",
                 "B", "Both literals refer to the exact same pooled instance in the String Constant Pool, so their references match.", "BEGINNER");
 
@@ -278,9 +308,13 @@ public class DataSeeder implements CommandLineRunner {
                 "String", "StringBuffer", "StringBuilder", "char[]",
                 "C", "StringBuilder is mutable and non-synchronized, offering faster performance than synchronized StringBuffer for single threads.", "INTERMEDIATE");
 
-        addQuestion(t6, "What does \"university\".substring(3, 7) evaluate to?",
-                "iver", "vers", "versi", "iveri",
-                "A", "substring(beginIndex, endIndex) is inclusive of beginIndex (3 -> 'i') and exclusive of endIndex (7 -> index 6 'r'), yielding 'iver'.", "INTERMEDIATE");
+        addQuestion(t6, "What is the purpose of StringBuilder's ensureCapacity method?",
+                "To trim the capacity to the current length", "To ensure the capacity is at least the specified argument", "To convert StringBuilder to String", "To reverse the string content",
+                "B", "ensureCapacity ensures the internal buffer can hold at least the specified number of characters.", "ADVANCED");
+
+        addQuestion(t6, "Which method converts StringBuilder to a String?",
+                "toString()", "toString(String)", "String.valueOf()", "toString()",
+                "A", "toString() returns the String representation of the StringBuilder content.", "BEGINNER");
 
         // ==========================================
         // 7. METHODS
@@ -294,7 +328,7 @@ public class DataSeeder implements CommandLineRunner {
                 "public class MathHelper {\n    public static int add(int a, int b) {\n        return a + b;\n    }\n    // Overloaded method\n    public static double add(double a, double b) {\n        return a + b;\n    }\n}",
                 7
         ));
-        seedResource(t7, "Method Design, Signatures & Pass-by-Value", "ARTICLE", "https://dev.java/learn/methods/", "Deep dive into JVM call frames, stack activation records, and overloading.", "BEGINNER");
+        seedResource(t7, "Method Design, Signatures & Pass-by-Value", "ARTICLE", "https://docs.oracle.com/javase/tutorial/java/javaI/methods.html", "Deep dive into JVM call frames, stack activation records, and overloading.", "BEGINNER");
 
         addQuestion(t7, "How does Java pass arguments to methods?",
                 "Primitives by value, objects by reference.",
@@ -317,9 +351,13 @@ public class DataSeeder implements CommandLineRunner {
                 "A method that cannot return any value.",
                 "B", "Recursion occurs when a method calls itself to break down a problem, stopping when a base condition is satisfied.", "BEGINNER");
 
-        addQuestion(t7, "What keyword allows a method to accept a variable number of arguments (varargs)?",
+addQuestion(t7, "What keyword allows a method to accept a variable number of arguments (varargs)?",
                 "params", "...", "var", "args[]",
                 "B", "The ellipsis (...) syntax (e.g. int... numbers) denotes a variable-length argument list treated as an array inside the method.", "INTERMEDIATE");
+
+        addQuestion(t7, "Which of the following can method overloading change?",
+                "Method name only", "Parameter list (count, type, or order)", "Return type only", "Visibility modifier",
+                "B", "Method overloading requires changing the parameter list (number, type, or order of parameters).", "BEGINNER");
 
         // ==========================================
         // 8. OBJECT-ORIENTED PROGRAMMING
@@ -361,8 +399,19 @@ public class DataSeeder implements CommandLineRunner {
                 "Interfaces can store instance state in non-final variables.",
                 "B", "A class can extend only one class (abstract or concrete) but can implement multiple interfaces, providing modular contracts.", "INTERMEDIATE");
 
-        linkUnassignedTopics(java);
+        addQuestion(t8, "Which of the following is true about Java's default interface methods?",
+                "They cannot have a body.", "They can have a body with a default implementation.", "They are private by default.", "They cannot be overridden.",
+                "B", "Java 8+ allows interface methods to have default implementation using the 'default' keyword.", "INTERMEDIATE");
 
+        addQuestion(t8, "A class can implement multiple interfaces but can extend only one abstract class. What is this principle called?",
+                "Inheritance", "Polymorphism", "Encapsulation", "Abstraction",
+                "B", "This is a fundamental design principle in Java allowing modular contracts via interfaces.", "BEGINNER");
+
+        addQuestion(t8, "Which of the following statements about Java interfaces is correct?",
+                "Interfaces cannot have any methods with bodies.", "All interface methods must be abstract.", "Interfaces cannot be implemented by classes.", "Interfaces cannot extend other interfaces.",
+                "A", "Java 8+ introduced default methods in interfaces, but prior to Java 8, all interface methods were implicitly abstract.", "BEGINNER");
+
+        linkUnassignedTopics(java);
         seedIfEmpty(python);
         seedIfEmpty(dsa);
         seedIfEmpty(dbms);
@@ -659,7 +708,7 @@ public class DataSeeder implements CommandLineRunner {
                 "Assuming HTTP is encrypted; confusing DHCP with DNS; using UDP where reliability is required.",
                 "HTTP  -> application protocol over TCP\nHTTPS -> HTTP over TLS\nDHCP  -> assigns IP addresses\nARP   -> maps IP addresses to MAC addresses",
                 4);
-        seedResource(protocols, "Network Protocols Overview", "ARTICLE", "https://www.geeksforgeeks.org/types-of-network-protocols/", "Common protocols and their roles in the network stack.", "BEGINNER");
+        seedResource(protocols, "Network Protocols Overview", "ARTICLE", "https://www.geeksforgeeks.org/network-protocols/", "Common protocols and their roles in the network stack.", "BEGINNER");
         addQuestion(protocols, "Which protocol assigns IP addresses automatically?",
                 "DNS", "DHCP", "ARP", "SMTP", "B", "DHCP dynamically provides IP configuration to hosts.", "BEGINNER");
         addQuestion(protocols, "Which protocol maps IP addresses to MAC addresses on a local network?",
@@ -735,8 +784,54 @@ public class DataSeeder implements CommandLineRunner {
         resourceRepository.save(res);
     }
 
+    private void repairResourceUrls() {
+        Map<String, String> deadUrlFixes = Map.of(
+                "https://dev.java/learn/datatypes/",
+                "https://docs.oracle.com/javase/tutorial/essential/java/datatypes.html",
+                "https://dev.java/learn/control-flow/",
+                "https://docs.oracle.com/javase/tutorial/java/nutsandbolts/if.html",
+                "https://dev.java/learn/loops/",
+                "https://docs.oracle.com/javase/tutorial/java/nutsandbolts/loop.html",
+                "https://dev.java/learn/arrays/",
+                "https://docs.oracle.com/javase/tutorial/java/nutsandbolts/arrays.html",
+                "https://dev.java/learn/methods/",
+                "https://docs.oracle.com/javase/tutorial/java/javaI/methods.html",
+                "https://www.geeksforgeeks.org/types-of-network-protocols/",
+                "https://www.geeksforgeeks.org/network-protocols/"
+        );
+
+        for (LearningResource resource : resourceRepository.findAll()) {
+            String replacement = deadUrlFixes.get(resource.getResourceUrl());
+            if (replacement != null) {
+                resource.setResourceUrl(replacement);
+                resourceRepository.save(resource);
+            }
+        }
+    }
+
+    private void backfillRecommendationResources() {
+        for (LearningRecommendation recommendation : recommendationRepository.findAll()) {
+            if (recommendation.getResource() != null || recommendation.getTopic() == null) {
+                continue;
+            }
+            List<LearningResource> topicResources =
+                    resourceRepository.findByTopicId(recommendation.getTopic().getId());
+            if (!topicResources.isEmpty()) {
+                recommendation.setResource(topicResources.get(0));
+                recommendationRepository.save(recommendation);
+            }
+        }
+    }
+
+    private boolean questionExists(Topic topic, String questionText) {
+        return questionRepository.existsByTopicIdAndQuestionText(topic.getId(), questionText);
+    }
+
     private void addQuestion(Topic topic, String text, String optA, String optB, String optC, String optD, 
                              String correctKey, String explanation, String difficulty) {
+        if (questionExists(topic, text)) {
+            return;
+        }
         Question q = questionRepository.save(new Question(topic, text, explanation, difficulty));
         optionRepository.save(new QuestionOption(q, "A", optA, "A".equalsIgnoreCase(correctKey)));
         optionRepository.save(new QuestionOption(q, "B", optB, "B".equalsIgnoreCase(correctKey)));

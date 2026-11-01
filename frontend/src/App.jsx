@@ -19,6 +19,8 @@ import QuizCatalog from './pages/QuizCatalog';
 import QuizPlay from './pages/QuizPlay';
 import QuizResult from './pages/QuizResult';
 import Recommendations from './pages/Recommendations';
+import Resources from './pages/Resources';
+import ResourceDetail from './pages/ResourceDetail';
 import ProgressAnalytics from './pages/ProgressAnalytics';
 import History from './pages/History';
 import Profile from './pages/Profile';
@@ -64,6 +66,8 @@ export default function App() {
             <Route path="/quizzes/play" element={<QuizPlay />} />
             <Route path="/quizzes/result/:attemptId" element={<QuizResult />} />
             <Route path="/recommendations" element={<Recommendations />} />
+            <Route path="/resources" element={<Resources />} />
+            <Route path="/resources/:resourceId" element={<ResourceDetail />} />
             <Route path="/analytics" element={<ProgressAnalytics />} />
             <Route path="/history" element={<History />} />
             <Route path="/profile" element={<Profile />} />

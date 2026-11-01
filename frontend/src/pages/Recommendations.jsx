@@ -4,6 +4,8 @@ import api from '../api/client';
 import PageHeader from '../components/ui/PageHeader';
 import { EmptyState, ErrorState, LoadingState } from '../components/ui/StateViews';
 import {
+  BookMarked,
+  ExternalLink,
   Lightbulb,
   CheckCircle2,
   BookOpen,
@@ -123,6 +125,35 @@ export default function Recommendations() {
                     <strong className="text-slate-600">Why this is recommended: </strong>
                     {rec.reason}
                   </p>
+                )}
+
+                {rec.resourceTitle && (rec.resourceId || rec.resourceUrl) && (
+                  <div className="flex items-center gap-2 rounded-xl border border-primary-100 bg-primary-50/60 px-3 py-2">
+                    <BookMarked className="h-3.5 w-3.5 shrink-0 text-primary-700" aria-hidden="true" />
+                    <span className="shrink-0 text-[11px] font-semibold uppercase tracking-wider text-primary-700">
+                      Suggested resource
+                    </span>
+                    {rec.resourceId ? (
+                      <Link
+                        to={`/resources/${rec.resourceId}`}
+                        className="truncate text-xs font-semibold text-navy hover:text-primary-700 hover:underline"
+                      >
+                        {rec.resourceTitle}
+                      </Link>
+                    ) : (
+                      <a
+                        href={rec.resourceUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="truncate text-xs font-semibold text-navy hover:text-primary-700 hover:underline"
+                      >
+                        {rec.resourceTitle}
+                      </a>
+                    )}
+                    {rec.resourceUrl && !rec.resourceId && (
+                      <ExternalLink className="h-3 w-3 shrink-0 text-slate-400" aria-hidden="true" />
+                    )}
+                  </div>
                 )}
               </div>
 
