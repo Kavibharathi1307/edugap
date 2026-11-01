@@ -16,6 +16,7 @@ node_modules/
 dist/
 .env.local
 .env.*.local
+*.env
 
 # Java / Maven
 target/
@@ -23,3 +24,11 @@ target/
 *.jar
 *.war
 .m2/
+
+# Database
+*.db
+*.sqlite
+
+# OS
+.DS_Store
+Thumbs.db
