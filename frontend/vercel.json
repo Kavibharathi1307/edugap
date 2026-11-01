@@ -4,5 +4,8 @@
       "source": "/(.*)",
       "destination": "/index.html"
     }
-  ]
+  ],
+  "environmentVariables": {
+    "VITE_API_URL": "https://edugap-backend.onrender.com"
+  }
 }
