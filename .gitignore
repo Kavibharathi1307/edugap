@@ -1,0 +1,25 @@
+# Root .gitignore
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+
+# IDE / Editor files
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+
+# Node / Frontend
+node_modules/
+dist/
+.env.local
+.env.*.local
+
+# Java / Maven
+target/
+*.class
+*.jar
+*.war
+.m2/
